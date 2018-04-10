@@ -30,6 +30,9 @@ public class SirenAlertWrapper {
         this.mActivityRef = new WeakReference<>(activity);
     }
 
+    protected SirenHelper getSirenHelper() {
+        return SirenHelper.getInstance();
+    }
 
     public void show() {
         Activity activity = mActivityRef.get();
@@ -68,7 +71,11 @@ public class SirenAlertWrapper {
         TextView message = (TextView) dialog.findViewById(R.id.tvSirenAlertMessage);
         Button update = (Button) dialog.findViewById(R.id.btnSirenUpdate);
         Button nextTime = (Button) dialog.findViewById(R.id.btnSirenNextTime);
-        final Button skip = (Button) dialog.findViewById(R.id.btnSirenSkip);
+        Button skip = (Button) dialog.findViewById(R.id.btnSirenSkip);
+        //for minor update, buttons that are visible to user is now Remind me tomorrow or weekly
+        //and after that they need update the app.
+        Button remindMeTomorrow_Button = (Button) dialog.findViewById(R.id.btn_remindmetomorrow);
+        Button remindMeWeekly_Button = (Button) dialog.findViewById(R.id.btn_remindmeweekly);
 
         update.setText(mSirenHelper.getLocalizedString(mActivityRef.get(), R.string.update, mLocale));
         nextTime.setText(mSirenHelper.getLocalizedString(mActivityRef.get(), R.string.next_time, mLocale));
@@ -93,16 +100,40 @@ public class SirenAlertWrapper {
 
         if (mSirenAlertType == SirenAlertType.OPTION
                 || mSirenAlertType == SirenAlertType.SKIP) {
-            nextTime.setVisibility(View.VISIBLE);
-            nextTime.setOnClickListener(new View.OnClickListener() {
+//            nextTime.setVisibility(View.VISIBLE);
+
+//            int days = getSirenHelper().getOptionDailogLaatVisible(mActivityRef.get());
+//
+            remindMeTomorrow_Button.setVisibility(View.VISIBLE);
+            remindMeWeekly_Button.setVisibility(View.VISIBLE);
+            remindMeTomorrow_Button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (mSirenListener != null) {
-                        mSirenListener.onCancel();
+
+                    getSirenHelper().setNoOfDaysForForce(mActivityRef.get(), 1);
+                    if(mSirenListener != null) {
+                        dialog.dismiss();
+                        mSirenListener.closeDialogAndProceed();
                     }
-                    dialog.dismiss();
+
                 }
             });
+
+            remindMeWeekly_Button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v){
+
+                    getSirenHelper().setNoOfDaysForForce(mActivityRef.get(), 7);
+                    if(mSirenListener != null) {
+                        dialog.dismiss();
+                        mSirenListener.closeDialogAndProceed();
+                    }
+
+
+                }
+            });
+
+
         }
         if (mSirenAlertType == SirenAlertType.SKIP) {
             skip.setVisibility(View.VISIBLE);

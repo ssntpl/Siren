@@ -3,7 +3,6 @@ package com.eggheadgames.siren;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
@@ -56,6 +55,11 @@ class SirenHelper {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    int getNoOfDaysCLickedByUser(Context context){
+        int no_of_days = PreferenceManager.getDefaultSharedPreferences(context).getInt(Constants.PREFERENCES_NO_OF_DAYS_FOR_FORCE, 0);
+        return no_of_days;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -129,6 +133,20 @@ class SirenHelper {
                 .commit();
     }
 
+    void setNoOfDaysForForce(Context context, int days){
+        PreferenceManager.getDefaultSharedPreferences(context).edit()
+                .putInt(Constants.PREFERENCES_NO_OF_DAYS_FOR_FORCE, days)
+                .commit();
+
+    }
+
+    void setNoOfDaysForForce_Zero(Context context){
+
+        PreferenceManager.getDefaultSharedPreferences(context).edit()
+                .putInt(Constants.PREFERENCES_NO_OF_DAYS_FOR_FORCE, 0)
+                .commit();
+    }
+
     String getVersionName(Context context) {
         try {
             return context.getPackageManager().getPackageInfo(getPackageName(context), 0).versionName;
@@ -137,6 +155,8 @@ class SirenHelper {
             return "";
         }
     }
+
+
 
     boolean isGreater(String first, String second) {
         return TextUtils.isDigitsOnly(first) && TextUtils.isDigitsOnly(second) && Integer.parseInt(first) > Integer.parseInt(second);

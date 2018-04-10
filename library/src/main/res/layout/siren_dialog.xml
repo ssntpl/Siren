@@ -14,12 +14,42 @@
         tools:text="Some text here" />
 
     <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:id="@+id/llsirenCustomButtonsContainser"
+        android:layout_below="@+id/tvSirenAlertMessage"
+
+        android:layout_marginLeft="@dimen/half_margin"
+        android:layout_marginRight="@dimen/half_margin">
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Remind me Tomorrow"
+            android:textAllCaps="false"
+            android:id="@+id/btn_remindmetomorrow"
+            android:visibility="gone"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Remind me after a week"
+            android:textAllCaps="false"
+            android:id="@+id/btn_remindmeweekly"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/llSirenButtonsContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_gravity="center"
-        android:layout_below="@+id/tvSirenAlertMessage">
+        android:layout_below="@+id/llsirenCustomButtonsContainser">
 
         <Button
             android:id="@+id/btnSirenNextTime"

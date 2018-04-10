@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -90,13 +91,24 @@ public class Siren {
 
         mActivityRef = new WeakReference<>(activity);
 
-        if (getSirenHelper().isEmpty(appDescriptionUrl)) {
-            getSirenHelper().logError(getClass().getSimpleName(), "Please make sure you set correct path to app version description document");
-            return;
-        }
-
         if (versionCheckType == SirenVersionCheckType.IMMEDIATELY) {
-            performVersionCheck(appDescriptionUrl);
+
+            int d = getSirenHelper().getNoOfDaysCLickedByUser(mApplicationContext);
+            int m = getSirenHelper().getDaysSinceLastCheck(mApplicationContext);
+
+            Log.d("days:" + d, "app days" + m);
+            if(getSirenHelper().getNoOfDaysCLickedByUser(mApplicationContext)<= getSirenHelper().getDaysSinceLastCheck(mApplicationContext)){
+
+                performVersionCheck(appDescriptionUrl);
+            } else if(getSirenHelper().getNoOfDaysCLickedByUser(mApplicationContext) > getSirenHelper().getDaysSinceLastCheck(mApplicationContext)){
+
+                if(mSirenListener != null)
+                    mSirenListener.alreadyShowDialog();
+            } else {
+
+                performVersionCheck(appDescriptionUrl);
+            }
+
         } else if (versionCheckType.getValue() <= getSirenHelper().getDaysSinceLastCheck(mApplicationContext)
                 ||getSirenHelper().getLastVerificationDate(mApplicationContext) == 0) {
             performVersionCheck(appDescriptionUrl);
@@ -176,7 +188,7 @@ public class Siren {
         if (appJson.isNull(Constants.JSON_MIN_VERSION_NAME)) {
             return false;
         }
-        getSirenHelper().setLastVerificationDate(mApplicationContext);
+//        getSirenHelper().setLastVerificationDate(mApplicationContext);
 
         // If no config found, assume version check is enabled
         Boolean versionCheckEnabled = appJson.has(Constants.JSON_ENABLE_VERSION_CHECK) ? appJson.getBoolean(Constants.JSON_ENABLE_VERSION_CHECK) : true;
@@ -209,15 +221,49 @@ public class Siren {
                         alertType = SirenAlertType.FORCE;
                     } else {
                         switch (index) {
-                            case 0: alertType = majorUpdateAlertType; break;
-                            case 1: alertType = minorUpdateAlertType; break;
-                            case 2: alertType = patchUpdateAlertType; break;
-                            case 3: alertType = revisionUpdateAlertType; break;
-                            default: alertType = SirenAlertType.OPTION; break;
+                            case 0:
+                                alertType = majorUpdateAlertType;
+                                break;
+
+                            case 1:
+                                if(getSirenHelper().getNoOfDaysCLickedByUser(mApplicationContext)<= getSirenHelper().getDaysSinceLastCheck(mApplicationContext) && getSirenHelper().getNoOfDaysCLickedByUser(mApplicationContext) != 0) {
+
+                                    if(getSirenHelper().getDaysSinceLastCheck(mApplicationContext) >= 15 ){
+                                        alertType = majorUpdateAlertType;
+                                        getSirenHelper().setLastVerificationDate(mApplicationContext);
+                                    } else {
+                                        alertType = majorUpdateAlertType;
+                                    }
+                                } else {
+
+                                    alertType = minorUpdateAlertType;
+                                    //save last successful verification date
+                                    getSirenHelper().setLastVerificationDate(mApplicationContext);
+                                }
+//                                alertType = minorUpdateAlertType;
+                                break;
+
+                            case 2:
+                                alertType = patchUpdateAlertType;
+                                //save last successful verification date
+                                getSirenHelper().setLastVerificationDate(mApplicationContext);
+                                break;
+
+                            case 3:
+                                alertType = revisionUpdateAlertType;
+                                //save last successful verification date
+                                getSirenHelper().setLastVerificationDate(mApplicationContext);
+                                break;
+
+                            default:
+                                alertType = SirenAlertType.OPTION;
+                                break;
+
                         }
                     }
                     break;
                 } else if (compareResult == -1) {
+
                     return false;
                 }
             }
@@ -225,6 +271,16 @@ public class Siren {
             if (versionUpdateDetected) {
                 showAlert(minVersionName, alertType);
                 return true;
+            } else {
+
+                int days = getSirenHelper().getNoOfDaysCLickedByUser(mApplicationContext);
+                if(days > 0) {
+                    getSirenHelper().setNoOfDaysForForce_Zero(mApplicationContext);
+                }
+
+                //if there is not update exists, then developer can proceed.
+                if(mSirenListener != null)
+                    mSirenListener.onNoUpdateDetect();
             }
         }
         return false;
@@ -255,7 +311,7 @@ public class Siren {
             Boolean forceUpdateEnabled = appJson.has(Constants.JSON_FORCE_ALERT_TYPE) ? appJson.getBoolean(Constants.JSON_FORCE_ALERT_TYPE) : false;
 
             //save last successful verification date
-            getSirenHelper().setLastVerificationDate(mApplicationContext);
+//            getSirenHelper().setLastVerificationDate(mApplicationContext);
 
             if (getSirenHelper().getVersionCode(mApplicationContext) < minAppVersionCode
                     && !getSirenHelper().isVersionSkippedByUser(mApplicationContext, String.valueOf(minAppVersionCode))) {
@@ -322,7 +378,7 @@ public class Siren {
                 }
 
             } catch (Exception ex) {
-              ex.printStackTrace();
+                ex.printStackTrace();
             } finally {
                 if (connection != null) {
                     try {
